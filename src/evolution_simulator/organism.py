@@ -3,11 +3,12 @@
 import random
 import numpy as np
 import matplotlib.pyplot as plt 
-from config import *
-from dna import DNA
-import logger 
+from .config import *
+from .dna import DNA
+import logging # 1. Import logging
 
-logger = logger.logger()
+# 2. Get a logger instance for this module
+logger = logging.getLogger(__name__)
 
 class Organism:
     # __init__ is mostly the same
@@ -97,7 +98,7 @@ class Organism:
         # Priority 1: Thirst
 
         if self.hydration < self.dna.genes['hydration_urgency_threshold']:
-            logger.log(f"Organism at ({self.x}, {self.y}) is thirsty (Hydration: {self.hydration:.1f}). Seeking water...")
+            logger.debug(f"Organism at ({self.x}, {self.y}) is thirsty (Hydration: {self.hydration:.1f}). Seeking water...")
             self.priority='b'
             water_tiles = list(zip(*np.where(world.water_grid[
                 max(0, self.x - round(self.dna.genes['vision_range'])):self.x + round(self.dna.genes['vision_range']) + 1,
@@ -110,11 +111,11 @@ class Organism:
                 world_water_tiles = [(x + offset_x, y + offset_y) for x, y in water_tiles]
                 target_pos = self.find_closest(world_water_tiles, world)
             else:
-                logger.log(f"Organism at ({self.x}, {self.y}) sees no water nearby.")
+                logger.debug(f"Organism at ({self.x}, {self.y}) sees no water nearby.")
 
         # Priority 2: Hunger (if not thirsty)
         if target_pos is None and self.energy < self.dna.genes['energy_urgency_threshold']:
-            logger.log(f"Organism at ({self.x}, {self.y}) is hungry (Energy: {self.energy:.1f}). Seeking food...")
+            logger.debug(f"Organism at ({self.x}, {self.y}) is hungry (Energy: {self.energy:.1f}). Seeking food...")
             self.priority='g'
             # Herbivore seeks food
             if self.diet_type == 0:
@@ -128,19 +129,19 @@ class Organism:
                     world_food_tiles = [(x + offset_x, y + offset_y) for x, y in food_tiles]
                     target_pos = self.find_closest(world_food_tiles, world)
                 else:
-                    logger.log(f"Organism at ({self.x}, {self.y}) sees no food nearby.")
+                    logger.debug(f"Organism at ({self.x}, {self.y}) sees no food nearby.")
             # Carnivore seeks prey
             elif self.diet_type == 1:
                 prey = [org for org in world.organisms if org.diet_type == 0 and org.is_alive()]
                 visible_prey = [(p.x, p.y) for p in prey if abs(p.x - self.x) <= self.dna.genes['vision_range'] and abs(p.y - self.y) <= self.dna.genes['vision_range']]
                 target_pos = self.find_closest(visible_prey, world)
             else:
-                logger.log(f"Organism at ({self.x}, {self.y}) sees no food nearby.")
+                logger.debug(f"Organism at ({self.x}, {self.y}) sees no food nearby.")
 
         if target_pos is None:
             # Priority 3: Reproduction (if not thirsty or hungry)
             if self.energy >= self.dna.genes['reproduction_energy_threshold'] and self.age >= self.dna.genes['reproduction_age_threshold']:
-                logger.log(f"Organism at ({self.x}, {self.y}) is seeking a mate (Energy: {self.energy:.1f}).")
+                logger.debug(f"Organism at ({self.x}, {self.y}) is seeking a mate (Energy: {self.energy:.1f}).")
                 self.priority='r'
                 mates = [org for org in world.organisms if org is not self and org.diet_type == self.diet_type and org.can_reproduce() and org.is_alive()]
                 visible_mates = [(m.x, m.y) for m in mates if abs(m.x - self.x) <= self.dna.genes['vision_range'] and abs(m.y - self.y) <= self.dna.genes['vision_range']]

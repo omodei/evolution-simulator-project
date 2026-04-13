@@ -2,13 +2,14 @@
 import numpy as np
 import math
 from itertools import combinations
-from organism import Organism
-from dna import DNA
-from config import *
+from .organism import Organism
+from .dna import DNA
+from .config import *
 from perlin_noise import PerlinNoise # <-- Import the new library
-import logger 
+import logging # 1. Import logging
 
-logger = logger.logger()
+# 2. Get a logger instance for this module
+logger = logging.getLogger(__name__)
 
 class World:
     def __init__(self, size):
@@ -56,7 +57,7 @@ class World:
         # 1. Update basic stats and move all organisms first
         for org in self.organisms:
             org.update(self)
-            logger.log(org)
+            logger.debug(org)
 
         # --- NEW: 2. Handle Drinking ---
         for org in self.organisms:

@@ -1,20 +1,40 @@
-# main.py (Updated with Live Graph)
+# run_sim.py (Updated with Live Graph)
 
 import random
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 
-from config import *
-from world import World
-from organism import Organism
+from evolution_simulator.config import *
+from evolution_simulator.world import World
+from evolution_simulator.organism import Organism
+
+import logging 
+
+# --- NEW: Configure Logging ---
+# This sets up a logger that writes to a file named 'simulation.log'.
+# The file is overwritten on each run (filemode='w').
+logging.basicConfig(
+    level=logging.INFO,  # Set the minimum level of messages to log (e.g., INFO, DEBUG)
+    format='%(asctime)s - %(levelname)s - %(name)s - %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S',
+    filename='simulation.log', # Log to this file
+    filemode='w' # Overwrite the log file each time
+)
+
+# Also add a console handler to see logs in the terminal as they happen
+console_handler = logging.StreamHandler()
+console_handler.setLevel(logging.INFO)
+formatter = logging.Formatter('%(name)-12s: %(levelname)-8s %(message)s')
+console_handler.setFormatter(formatter)
+logging.getLogger('').addHandler(console_handler)
 
 def setup_simulation():
     """Initializes the world and populates it with organisms."""
     random.seed(RANDOM_SEED)
     np.random.seed(RANDOM_SEED)
     
-    print("Setting up simulation...")
+    logging.info("Setting up simulation...")
     simulation_world = World(WORLD_SIZE)
     
     for _ in range(INITIAL_ORGANISMS):
@@ -22,7 +42,7 @@ def setup_simulation():
         y = random.randint(0, WORLD_SIZE[1] - 1)
         simulation_world.add_organism(Organism(x, y))
         
-    print(f"Created {len(simulation_world.organisms)} organisms.")
+    logging.info(f"Created {len(simulation_world.organisms)} organisms.")
     return simulation_world
 
 def run_simulation():
@@ -76,7 +96,7 @@ def run_simulation():
             history_avg_fitness.pop(0)  
     
         if tick < 100 or (tick % 10 ==0):
-            print(f"Tick: {tick:>4} | Pop: {pop_h+pop_c} (H: {pop_h}, C: {pop_c}) | Avg Fitness: {avg_fitness_score:.2f}")
+            logging.info(f"Tick: {tick:>4} | Pop: {pop_h+pop_c} (H: {pop_h}, C: {pop_c}) | Avg Fitness: {avg_fitness_score:.2f}")
 
         if pop_h+pop_c < 200 or (tick % 10 == 0): # Print population every 10 ticks, but only if it's not too large
             plot=True
@@ -144,11 +164,11 @@ def run_simulation():
             plt.pause(0.01) # Pause briefly to update the plot
 
         if not world.organisms and tick > 50:
-            print("All organisms have died. Ending simulation.")
+            logging.info("All organisms have died. Ending simulation.")
             break
             
     plt.ioff()
-    print("Simulation finished. Displaying final state.")
+    logging.info("Simulation finished. Displaying final state.")
     plt.show()
 
 if __name__ == "__main__":

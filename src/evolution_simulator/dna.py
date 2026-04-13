@@ -1,8 +1,10 @@
 # dna.py (Updated)
 import random
-from config import *
-import logger 
-logger = logger.logger()
+from .config import *
+import logging # 1. Import logging
+
+# 2. Get a logger instance for this module
+logger = logging.getLogger(__name__)
 
 class DNA:
     def __init__(self, genes=None):
@@ -55,5 +57,5 @@ class DNA:
                         child_genes[gene] = int(max(50, child_genes[gene] + mutation)) # Max age should be at least 50 to allow for reproduction
                     else:
                         child_genes[gene] = max(0.1, child_genes[gene] + mutation)   # Other genes should not go below 0.1 to prevent non-viable organisms
-                logger.log(f"Mutated gene '{gene}' from {pre_mutation_value} to {child_genes[gene]}")
+                logger.info(f"Mutated gene '{gene}' from {pre_mutation_value} to {child_genes[gene]}")
         return DNA(genes=child_genes)

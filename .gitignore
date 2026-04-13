@@ -1,18 +1,19 @@
 # .gitignore
+*.egg-info/
 
-    # Python cache
-    __pycache__/
-    *.pyc
-    
-    # Virtual environment
-    venv/
-    .venv/
-    env/
-    .env/
+# Python cache
+__pycache__/
+*.pyc
 
-    # IDE / OS specific
-    .idea/
-    .vscode/
-    .DS_Store
-    # Logs
-    *.log
+# Virtual environment
+venv/
+.venv/
+env/
+.env/
+
+# IDE / OS specific
+.idea/
+.vscode/
+.DS_Store
+# Logs
+*.log
