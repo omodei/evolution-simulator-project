@@ -8,6 +8,15 @@ import matplotlib.colors as mcolors
 from evolution_simulator.config import *
 from evolution_simulator.world import World
 from evolution_simulator.organism import Organism
+from evolution_simulator.species_library import SPECIES
+# In your config.py, you would define this:
+    
+INITIAL_POPULATION = {
+    "grass": 150,
+    "algae": 100,
+    "water_flea": 30,
+    "minnow": 10,
+}
 
 import logging 
 
@@ -37,11 +46,20 @@ def setup_simulation():
     logging.info("Setting up simulation...")
     simulation_world = World(WORLD_SIZE)
     
-    for _ in range(INITIAL_ORGANISMS):
-        x = random.randint(0, WORLD_SIZE[0] - 1)
-        y = random.randint(0, WORLD_SIZE[1] - 1)
-        simulation_world.add_organism(Organism(x, y))
-        
+    # NEW way to populate the world
+    for species_name, count in INITIAL_POPULATION.items():
+        for _ in range(count):
+            x = random.randint(0, WORLD_SIZE[0] - 1)
+            y = random.randint(0, WORLD_SIZE[1] - 1)
+            
+            # For aquatic species, spawn them in water
+            if SPECIES[species_name].get("capabilities", {}).get("requires_water_tile"):
+                # (You need a robust way to find a water tile here)
+                water_coords = list(zip(*np.where(simulation_world.water_grid > 0)))
+                if not water_coords: continue # No water on map, can't spawn
+                x, y = random.choice(water_coords)
+                
+            simulation_world.add_organism(Organism(x, y, species_name))        
     logging.info(f"Created {len(simulation_world.organisms)} organisms.")
     return simulation_world
 
@@ -58,10 +76,9 @@ def run_simulation():
     water_cmap = mcolors.LinearSegmentedColormap.from_list("water_cmap", ["saddlebrown", "blue"])
 
     # --- STEP 2: Initialize lists to store population history ---
-    history_time = []
-    history_herbivores = []
-    history_carnivores = []
-    history_total = []
+    history_time        = []
+    history_organisms   = {}
+    history_total       = []
     history_avg_fitness = []
 
     for tick in range(SIMULATION_TICKS):
@@ -74,29 +91,31 @@ def run_simulation():
         #ax_world.scatter(food_x, food_y, color='red', s=30, marker='s')
 
         
-        herbivores = [org for org in world.organisms if org.diet_type == 0]
-        carnivores = [org for org in world.organisms if org.diet_type == 1]
-        pop_h = len(herbivores)
-        pop_c = len(carnivores)
         total_fitness_score = sum(org.fitness_score for org in world.organisms)
-        avg_fitness_score = total_fitness_score / len(world.organisms) if world.organisms else 0
+        avg_fitness_score   = total_fitness_score / len(world.organisms) if world.organisms else 0
         # Append current data to history lists
 
         history_time.append(tick)
-        history_herbivores.append(pop_h)
-        history_carnivores.append(pop_c)
-        history_total.append(pop_h + pop_c)
+        for species_name in INITIAL_POPULATION.keys():
+            count = sum(1 for org in world.organisms if org.species_name == species_name)
+            if species_name not in history_organisms:
+                history_organisms[species_name] = []
+            history_organisms[species_name].append(count)
+
+        history_total.append(len(world.organisms))
         history_avg_fitness.append(avg_fitness_score)
+
         WINDOW_SIZE=10000
+
         if tick>WINDOW_SIZE:
             history_time.pop(0) 
-            history_herbivores.pop(0)  
-            history_carnivores.pop(0)  
+            for species_name in INITIAL_POPULATION.keys():
+                history_organisms[species_name].pop(0)
             history_total.pop(0)  
             history_avg_fitness.pop(0)  
     
         if tick < 100 or (tick % 10 ==0):
-            logging.info(f"Tick: {tick:>4} | Pop: {pop_h+pop_c} (H: {pop_h}, C: {pop_c}) | Avg Fitness: {avg_fitness_score:.2f}")
+            logging.info(f"Tick: {tick:>4} | Pop: {history_total[-1]} | Avg Fitness: {avg_fitness_score:.2f}")
 
         if pop_h+pop_c < 200 or (tick % 10 == 0): # Print population every 10 ticks, but only if it's not too large
             plot=True
@@ -111,24 +130,26 @@ def run_simulation():
                 food_x, food_y = np.where(world.food_grid == 1) 
                 ax_world.scatter(food_x, food_y, color='green', s=10, marker='.',facecolors='None', alpha=0.6)
 
-            if herbivores: # Only plot organisms if population is not too large (for performance)
-                ax_world.scatter([org.x for org in herbivores], [org.y for org in herbivores], 
-                        c=[org.color for org in herbivores],
-                        s=[50.0*org.energy / INITIAL_ENERGY for org in herbivores], 
-                        marker='o', 
-                        edgecolors=[org.priority for org in herbivores], 
-                        linewidths=1, alpha=[1 - org.age / org.max_age for org in herbivores]) # Size and alpha based on energy
+        
 
-            if carnivores: # Only plot organisms if population is not too large (for performance):
-                ax_world.scatter([org.x for org in carnivores], [org.y for org in carnivores], 
-                        c=[org.color for org in carnivores], 
-                        s=[50.0*org.energy / INITIAL_ENERGY for org in carnivores], 
-                        marker='*', 
-                        edgecolors=[org.priority for org in carnivores], 
-                        linewidths=1, alpha=[1 - org.age / org.max_age for org in carnivores]) # Size and alpha based on energy
+            # if herbivores: # Only plot organisms if population is not too large (for performance)
+            #     ax_world.scatter([org.x for org in herbivores], [org.y for org in herbivores], 
+            #             c=[org.color for org in herbivores],
+            #             s=[50.0*org.energy / INITIAL_ENERGY for org in herbivores], 
+            #             marker='o', 
+            #             edgecolors=[org.priority for org in herbivores], 
+            #             linewidths=1, alpha=[1 - org.age / org.max_age for org in herbivores]) # Size and alpha based on energy
+
+            # if carnivores: # Only plot organisms if population is not too large (for performance):
+            #     ax_world.scatter([org.x for org in carnivores], [org.y for org in carnivores], 
+            #             c=[org.color for org in carnivores], 
+            #             s=[50.0*org.energy / INITIAL_ENERGY for org in carnivores], 
+            #             marker='*', 
+            #             edgecolors=[org.priority for org in carnivores], 
+            #             linewidths=1, alpha=[1 - org.age / org.max_age for org in carnivores]) # Size and alpha based on energy
 
 
-            ax_world.set_title(f"World | Pop: {pop_h+pop_c} (H: {pop_h}, C: {pop_c})")
+            ax_world.set_title(f"World | Pop: {history_total[-1]} | Avg Fitness: {avg_fitness_score:.2f}")
             ax_world.set_xlim(0, WORLD_SIZE[0])
             ax_world.set_ylim(0, WORLD_SIZE[1])
         
@@ -138,8 +159,6 @@ def run_simulation():
             ax_graph.clear()
             ax_fitness.clear()
             # Plot the data
-            ax_graph.plot(history_time, history_herbivores, color='limegreen', label='Herbivores')
-            ax_graph.plot(history_time, history_carnivores, color='crimson', label='Carnivores')
             ax_graph.plot(history_time, history_total, color='black', linestyle='--', label='Total')
             ax_fitness.plot(history_time, history_avg_fitness, color='deepskyblue', label='Avg. Fitness')
 

@@ -20,7 +20,6 @@ class DNA:
                 'hunting_radius': random.uniform(0.8, 1.2) * HUNTING_RADIUS,
                 'speed': random.randint(1, SPEED),
                 #'brownian_motion_sigma': random.uniform(0.8, 1.2) * BROWNIAN_MOTION_SIGMA,
-                'vision_range': random.uniform(0.8, 1.2) * VISION_RANGE,
                 'hydration_urgency_threshold': random.uniform(0.8, 1.2) * HYDRATION_URGENCY_THRESHOLD,
                 'energy_urgency_threshold': random.uniform(0.8, 1.2) * ENERGY_URGENCY_THRESHOLD,
                 'reproduction_urgency_threshold': random.uniform(0.8, 1.2) * REPRODUCTION_URGENCY_THRESHOLD,

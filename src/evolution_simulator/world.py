@@ -34,6 +34,7 @@ class World:
                 # If the noise value is above our water level, it's a water tile
                 if noise_val > WATER_LEVEL_THRESHOLD:
                     self.water_grid[x, y] = 1.0
+
     def add_organism(self, organism):
         self.organisms.append(organism)
 
@@ -59,47 +60,47 @@ class World:
             org.update(self)
             logger.debug(org)
 
-        # --- NEW: 2. Handle Drinking ---
-        for org in self.organisms:
-            if not org.is_alive(): continue
-            # Check if the organism is on a water tile
-            if self.water_grid[org.x, org.y] > 0:
-                org.drink()
-
-        # 2. Handle eating and hunting
+         # 2. Handle interactions (like eating) in a general way
+        eaters = [org for org in self.organisms if "can_eat" in org.capabilities]
+        potential_prey = list(self.organisms) # All organisms are potential prey
+        
         eaten_this_tick = set()
-        # Create a copy of organisms to iterate over for hunting prey
-        all_prey = list(self.organisms) 
+        for eater in eaters:
+            if not eater.is_alive(): continue
 
-        for org in self.organisms:
+            eat_capability  = eater.capabilities["can_eat"]
+            valid_prey_tags = eat_capability["eats_tags"]
+
+            vision = eater.base_genes["vision_range"]
+
+            for prey in potential_prey:
+                if not prey.is_alive() or prey is eater: continue
+
+                # Check if the prey is something this eater can eat
+                # `isdisjoint` is a fast way to check for any overlap in sets
+                if not valid_prey_tags.isdisjoint(prey.tags):
+                    # Check distance (within vision/hunting range)
+                    dist_sq = (eater.x - prey.x)**2 + (eater.y - prey.y)**2
+                    if dist_sq <= vision**2:
+                        # Success! Eater eats prey.
+                        eater.energy += eat_capability["energy_gain"]
+                        prey.die()
+                        break # Eater only eats one thing per tick
+
+
+
+
+        # --- NEW: 2. Handle Drinking ---
+        drinkers = [org for org in self.organisms if "need_water" in org.capabilities]
+        for org in drinkers:
             if not org.is_alive(): continue
-
-            # Herbivore behavior
-            if org.diet_type == 0:
-                if self.food_grid[org.x, org.y] == 1:
-                    org.energy += org.dna.genes['eat_energy_gain']
-                    self.food_grid[org.x, org.y] = -1 # Remove the food from the grid
-            
-            # Carnivore behavior
-            elif org.diet_type == 1:
-                for prey in all_prey:
-                    # Carnivores hunt living herbivores they are not related to (for now, any herbivore)
-                    # A prey cannot be itself or already eaten this tick
-                    if org is prey or not prey.is_alive() or prey in eaten_this_tick:
-                        continue
-                    
-                    # Carnivores only eat herbivores
-                    if prey.diet_type == 0:
-                        dist = math.sqrt((org.x - prey.x)**2 + (org.y - prey.y)**2)
-                        if dist <= org.dna.genes['hunting_radius']:
-                            org.energy += org.dna.genes['carnivore_energy_gain']
-                            prey.energy = 0 # The prey is killed
-                            eaten_this_tick.add(prey)
-                            break # Carnivore only eats one prey per tick
+            if self.water_grid[org.x, org.y] > 0:
+                org.drink() 
 
         # 3. Handle Reproduction (logic is the same, but happens after eating)
         newborns = []
         reproduced_this_tick = set()
+
         for org1, org2 in combinations(self.organisms, 2):
             if org1 in reproduced_this_tick or org2 in reproduced_this_tick or not org1.is_alive() or not org2.is_alive():
                 continue
@@ -121,6 +122,6 @@ class World:
         # 5. Cull the dead (from old age, starvation, or being eaten)
         initial_pop = len(self.organisms)
         self.organisms = [org for org in self.organisms if org.is_alive()]
-        deaths = initial_pop - len(self.organisms)
+        #deaths = initial_pop - len(self.organisms)
         
         #print(f"Tick: {len(self.organisms):>4} pop | Born: {len(newborns):>2}, Died: {deaths:>2}")

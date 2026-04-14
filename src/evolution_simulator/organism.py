@@ -10,23 +10,39 @@ import logging # 1. Import logging
 # 2. Get a logger instance for this module
 logger = logging.getLogger(__name__)
 
+from .species_library import SPECIES
+
+
 class Organism:
-    # __init__ is mostly the same
-    def __init__(self, x, y, dna=None):
+    '''Represents an organism in the world with properties derived from its DNA.'''
+    def __init__(self, x, y, species_name, dna=None):
         self.x = x
         self.y = y
         self.age = 0
+        self.is_alive_flag = True
+
+        # --- LOAD FROM TEMPLATE ---
+        self.template = SPECIES[species_name]
+        self.name = self.template["name"]
+        self.tags = self.template["tags"]
+        self.marker = self.template["marker"]
+        self.capabilities = self.template["capabilities"]
+
+        self.dna = dna if dna else DNA()
+
         self.energy    = INITIAL_ENERGY
         self.hydration = INITIAL_HYDRATION
-        self.dna = dna if dna else DNA()
+
         # ... (derive properties from DNA as before)
-        self.max_age    = self.dna.genes['max_age']
+        self.max_age                       = self.dna.genes['max_age']
         self.energy_efficiency             = self.dna.genes['energy_efficiency']
         self.hydration_efficiency          = self.dna.genes['hydration_efficiency']
         self.reproduction_energy_threshold = self.dna.genes['reproduction_energy_threshold']
         self.reproduction_age_threshold    = self.dna.genes['reproduction_age_threshold']
         self.reproduction_energy_cost      = self.dna.genes['reproduction_energy_cost']
-        self.diet_type                     = self.dna.genes['diet_type']
+
+        #self.diet_type                     = self.dna.genes['diet_type']
+        
         self.fitness_score                 = self._calculate_fitness_score()
         self.priority                      = 'k' # 'b': hydration, 'g': eat,  'r': reproduce
         # Get a colormap from matplotlib (e.g., 'viridis', 'inferno', 'plasma')
@@ -67,6 +83,11 @@ class Organism:
     # is_alive, drink, can_reproduce are unchanged
     def is_alive(self):
         return self.energy > 0 and self.age < self.max_age and self.hydration > 0
+
+    def die(self):
+        """Marks the organism for removal."""
+        self.is_alive_flag = False
+        # Maybe add a 'corpse' with nutrients to the world here in the future?
 
     def drink(self):
         self.hydration = min(self.hydration + DRINK_AMOUNT, INITIAL_HYDRATION)
@@ -167,10 +188,28 @@ class Organism:
         """Update organism state for one tick."""
         self.age       += 1
         self.energy    -= ENERGY_PER_TICK    * self.energy_efficiency
+
+        if not self.is_alive():
+            return
+        
+        if self.capabilities.get("requires_water_tile") and world.water_grid[self.x, self.y] == 0:
+            self.die() # Dies if not in water
+            return
+
+        if "photosynthesize" in self.capabilities:
+            self.energy += self.capabilities["photosynthesize"]["energy_gain"]
+
+
+        if "can_move" in self.capabilities:
+            # Your intelligent movement logic here
+            self.move(world) 
+
+
         self.hydration -= HYDRATION_PER_TICK * self.hydration_efficiency
         
         if self.is_alive():
             self.move(world) # <-- Pass the world to the move method
+
     def __str__(self):
         return f"Organism at ({self.x}, {self.y}) | Age: {self.age} | Energy: {self.energy:.1f}/{self.dna.genes['energy_urgency_threshold']:.1f} | Hydration: {self.hydration:.1f}/{self.dna.genes['hydration_urgency_threshold']:.1f} | Diet: {'Carnivore' if self.diet_type == 1 else 'Herbivore'} | Fitness: {self.fitness_score:.2f}, Priority: {self.priority}"
         pass
