@@ -23,6 +23,9 @@ dependencies = [
     "numpy",
     "matplotlib",
     "perlin-noise",
+    "pandas",
+    "astropy",
+    "seaborn",
 ]
 
 [project.urls]

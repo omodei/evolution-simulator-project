@@ -12,84 +12,135 @@ Each species is a dictionary containing:
 """
 
 SPECIES = {
-    "grass": {
-        "name": "Grass",
-        "tags": {"plant", "producer"},
+    "A": {
+        "name": "A",
         "color": "forestgreen",
-        "marker": "P", # for Plant
-        "base_genes": {
-            'speed': 0, # Plants don't move
-            'vision_range': 0,
+        "marker": ".", 
+        "eats_tags": {"B": 0.9},
+        "genes": {
+            'max_age': 100,
+            'max_energy': 100,
+            'max_water': 100,
+            'vision':  100,
+            'speed':   2,
         },
-        "capabilities": {
-            "photosynthesize": {"energy_gain": 2},
-            "can_reproduce": {"min_energy": 20, "cost": 10},
-        }
     },
-    "algae": {
-        "name": "Algae",
-        "tags": {"plant", "producer", "aquatic"},
-        "color": "seagreen",
-        "marker": "P",
-        "base_genes": {
-            'speed': 0,
-            'vision_range': 0,
+    "B": {
+        "name": "B",
+        "color": "khaki",
+        "marker": "P", 
+        "eats_tags": {"C": 0.9},
+
+        "genes": {
+            'max_age': 100,
+            'max_energy': 100,
+            'max_water': 100,
+            'vision':  100,
+            'speed':   2,
         },
-        "capabilities": {
-            "photosynthesize": {"energy_gain": 1},
-            "can_reproduce": {"min_energy": 15, "cost": 8},
-            "requires_water_tile": True, # Must be on a water tile
-        }
     },
-    "water_flea": {
-        "name": "Water Flea",
-        "tags": {"animal", "herbivore", "insect", "aquatic"},
-        "color": "skyblue",
-        "marker": "o",
-        "base_genes": {
-            'speed': 1.5,
-            'vision_range': 4,
-            'max_age': 150,
+    "C": {
+        "name": "C",
+        "color": "grey",
+        "marker": "o", 
+        "eats_tags": {"D": 0.9},
+        "genes": {
+            'max_age': 100,
+            'max_energy': 100,
+            'max_water': 100,
+            'vision':  100,
+            'speed':   2,
         },
-        "capabilities": {
-            "can_move": True,
-            "can_eat": {"energy_gain": 40, "eats_tags": {"algae"}},
-            "can_reproduce": {"min_energy": 100, "cost": 50},
-            "requires_water_tile": True,
-        }
     },
-    "minnow": {
-        "name": "Minnow",
-        "tags": {"animal", "carnivore", "fish", "aquatic"},
-        "color": "silver",
-        "marker": ">",
-        "base_genes": {
-            'speed': 2.5,
-            'vision_range': 6,
-            'max_age': 200,
+    "D": {
+        "name": "D",
+        "color": "red",
+        "marker": "s", 
+        "eats_tags": {"E": 1},
+        "genes": {
+            'max_age': 70,
+            'max_energy': 80,
+            'max_water': 90,
+            'vision':  100,
+            'speed':   2,
         },
-        "capabilities": {
-            "can_move": True,
-            "can_eat": {"energy_gain": 60, "eats_tags": {"water_flea"}},
-            "can_reproduce": {"min_energy": 120, "cost": 60},
-            "requires_water_tile": True,
-        }
     },
-    "cow": {
-        "name": "Cow",
-        "tags": {"animal", "herbivore", "mammal"},
-        "color": "lightgray",
-        "marker": "o",
-        "base_genes": {
-            'speed': 1.0,
-            'vision_range': 5,
-            'max_age': 250,
+    "E": {
+        "name": "E",
+        "color": "blue",
+        "marker": "^", 
+        "eats_tags": {"F": 1},
+        "genes": {
+            'max_age': 70,
+            'max_energy': 80,
+            'max_water': 90,
+            'vision':  100,
+            'speed':   2,
         },
-        "capabilities": {
-            "can_move": True,
-            "can_eat": {"energy_gain": 50, "eats_tags": {"grass"}},
-            "can_reproduce": {"min_energy": 150, "cost": 75},
-            "need_water": {"hydration_gain": 50}, # Needs to drink every 5 ticks
-        }
+    },
+    "F": {
+        "name": "F",
+        "color": "pink",
+        "marker": "o", 
+        "eats_tags": {"G": 1},
+        "genes": {
+            'max_age': 70,
+            'max_energy': 80,
+            'max_water': 90,
+            'vision':  100,
+            'speed':   2,
+        },
+    },
+    "G": {
+        "name": "G",
+        "color": "magenta",
+        "marker": "^", 
+        "eats_tags": {"H": 1},
+        "genes": {
+            'max_age': 70,
+            'max_energy': 80,
+            'max_water': 90,
+            'vision':  100,
+            'speed':   2,
+        },
+    },
+    "H": {
+        "name": "H",
+        "color": "cyan",
+        "marker": "^", 
+        "eats_tags": {"I": 1},
+        "genes": {
+            'max_age': 70,
+            'max_energy': 80,
+            'max_water': 90,
+            'vision':  100,
+            'speed':   2,
+        },
+    },
+    "I": {
+        "name": "I",
+        "color": "k",
+        "marker": "o", 
+        "eats_tags": {"J": 1},
+        "genes": {
+            'max_age': 70,
+            'max_energy': 80,
+            'max_water': 90,
+            'vision':  100,
+            'speed':   2,
+        },
+    },
+    "J": {
+        "name": "J",
+        "color": "lime",
+        "marker": "o", 
+        "eats_tags": {"A": 1},
+        "genes": {
+            'max_age': 70,
+            'max_energy': 80,
+            'max_water': 90,
+            'vision':  100,
+            'speed':   2,
+        },
     },
 }
